@@ -125,7 +125,7 @@ namespace tb {
 		virtual ~Canvas();
 
 
-		struct Image : tb::Image<u8> {
+		struct Image : tb::Image<tb::Pixel<tb::u8>> {
 			Image(Canvas&);
 			~Image();
 
@@ -136,7 +136,7 @@ namespace tb {
 	protected:
 		cairo_surface_t* const surface;
 
-		virtual void OnCanvasUpdated(const Rect<2, double>&){};
+		virtual void OnCanvasUpdated(const Rect<2, double>&) {};
 
 	private:
 		static cairo_surface_t*

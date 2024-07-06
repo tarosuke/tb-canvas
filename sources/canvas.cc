@@ -37,7 +37,7 @@
 namespace tb {
 
 	Canvas::Image::Image(Canvas& canvas)
-		: tb::Image<u8>(
+		: tb::Image<tb::Pixel<u8>>(
 			  cairo_image_surface_get_data(canvas.surface),
 			  cairo_image_surface_get_stride(canvas.surface),
 			  cairo_image_surface_get_height(canvas.surface)),

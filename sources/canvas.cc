@@ -30,6 +30,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <syslog.h>
 #include <unistd.h>
 
 
@@ -39,8 +40,9 @@ namespace tb {
 	Canvas::Image::Image(Canvas& canvas)
 		: tb::Image<tb::Pixel<u8>>(
 			  cairo_image_surface_get_data(canvas.surface),
-			  cairo_image_surface_get_stride(canvas.surface),
-			  cairo_image_surface_get_height(canvas.surface)),
+			  cairo_image_surface_get_width(canvas.surface),
+			  cairo_image_surface_get_height(canvas.surface),
+			  cairo_image_surface_get_stride(canvas.surface)),
 		  surface(canvas.surface) {}
 	Canvas::Image::~Image() { cairo_surface_mark_dirty(surface); }
 
@@ -185,7 +187,7 @@ namespace tb {
 		static const struct EXTHandler {
 			const char* const ext;
 			cairo_surface_t* (*const loader)(const char*);
-		} exts[] = {{"jpg", LoadJPEG}, {"jpeg", LoadJPEG}, {}};
+		} exts[] = {{".jpg", LoadJPEG}, {".jpeg", LoadJPEG}, {}};
 
 		const auto ext(path.extension());
 		for (const EXTHandler* l(exts); (*l).ext; ++l) {

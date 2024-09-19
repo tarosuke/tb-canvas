@@ -18,31 +18,33 @@
 //  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //  */
 
-#include <cairo/cairo.h>
-#include <stdio.h>
-#include <tb/canvas.h>
-
 #include <fcntl.h>
-#include <jpeglib.h>
 #include <memory.h>
 #include <setjmp.h>
+#include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <syslog.h>
 #include <unistd.h>
+
+#include <cairo/cairo.h>
+#include <jpeglib.h>
+#include <stdio.h>
+#include <tb/canvas.h>
 
 
 
 namespace tb {
 
 	Canvas::Image::Image(Canvas& canvas)
-		: tb::Image<tb::Pixel<u8>>(
+		: tb::ImageARGB32(
 			  cairo_image_surface_get_data(canvas.surface),
 			  cairo_image_surface_get_width(canvas.surface),
-			  cairo_image_surface_get_height(canvas.surface),
-			  cairo_image_surface_get_stride(canvas.surface)),
+			  cairo_image_surface_get_height(canvas.surface)),
 		  surface(canvas.surface) {}
 	Canvas::Image::~Image() { cairo_surface_mark_dirty(surface); }
 

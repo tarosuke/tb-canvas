@@ -124,8 +124,7 @@ namespace tb {
 		Canvas(const std::filesystem::path&) noexcept(false);
 		virtual ~Canvas();
 
-
-		struct Image : tb::Image<tb::Pixel<tb::u8>> {
+		struct Image : tb::ImageARGB32 {
 			Image(Canvas&);
 			~Image();
 

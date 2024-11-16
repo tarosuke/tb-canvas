@@ -18,6 +18,7 @@
 //  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //  */
 
+#include <cctype>
 #include <fcntl.h>
 #include <memory.h>
 #include <setjmp.h>
@@ -36,19 +37,14 @@
 #include <stdio.h>
 #include <tb/canvas.h>
 
-
-
 namespace tb {
 
 	Canvas::Image::Image(Canvas& canvas)
-		: tb::ImageARGB32(
-			  cairo_image_surface_get_data(canvas.surface),
+		: tb::ImageARGB32(cairo_image_surface_get_data(canvas.surface),
 			  cairo_image_surface_get_width(canvas.surface),
 			  cairo_image_surface_get_height(canvas.surface)),
 		  surface(canvas.surface) {}
 	Canvas::Image::~Image() { cairo_surface_mark_dirty(surface); }
-
-
 
 	Canvas::GC::GC(Canvas& c) : gc(cairo_create(c.surface)), canvas(c) {}
 
@@ -73,43 +69,34 @@ namespace tb {
 		// 更新範囲を更新
 		double ex[4];
 		cairo_stroke_extents(gc, &ex[0], &ex[1], &ex[2], &ex[3]);
-		const Rect<2, double> e(
-			Vector<2, double>({ex[0], ex[1]}),
+		const Rect<2, double> e(Vector<2, double>({ex[0], ex[1]}),
 			Vector<2, double>({ex[2], ex[3]}));
 
 		extents |= e;
 
 		// フィル描画
 		cairo_set_source_rgba(
-			gc,
-			fillColor[1],
-			fillColor[2],
-			fillColor[3],
-			fillColor[0]);
+			gc, fillColor.R(), fillColor.G(), fillColor.B(), fillColor.A());
 		cairo_fill_preserve(gc);
 
 		// ストローク描画
-		cairo_set_source_rgba(
-			gc,
-			strokeColor[1],
-			strokeColor[2],
-			strokeColor[3],
-			strokeColor[0]);
+		cairo_set_source_rgba(gc, strokeColor.R(), strokeColor.G(),
+			strokeColor.B(), strokeColor.A());
 		cairo_set_line_width(gc, thickness);
 		cairo_set_line_cap(gc, caps[cap]);
 		cairo_set_line_join(gc, joins[join]);
 		cairo_stroke(gc);
 	}
 
-	void Canvas::GC::SetStroke(Pixel<u8> c) {
+	void Canvas::GC::SetStroke(Color c) {
 		Flush();
 		strokeColor = c;
 	}
-	void Canvas::GC::SetFill(Pixel<u8> c) {
+	void Canvas::GC::SetFill(Color c) {
 		Flush();
 		fillColor = c;
 	}
-	void Canvas::GC::Set(Pixel<u8> sc, Pixel<u8> fc) {
+	void Canvas::GC::Set(Color sc, Color fc) {
 		Flush();
 		strokeColor = sc;
 		fillColor = fc;
@@ -140,10 +127,9 @@ namespace tb {
 		join = j;
 	}
 
-
-	void Canvas::GC::Clear(Pixel<u8> c) {
+	void Canvas::GC::Clear(Color c) {
 		cairo_pattern_t* const p(cairo_get_source(gc));
-		cairo_set_source_rgba(gc, c[1], c[2], c[3], c[0]);
+		cairo_set_source_rgba(gc, c.R(), c.G(), c.B(), c.A());
 		cairo_paint(gc);
 		cairo_set_source(gc, p);
 	}
@@ -162,15 +148,12 @@ namespace tb {
 	}
 	void Canvas::GC::Puts(const char* utf8) { cairo_show_text(gc, utf8); }
 
-
-
 	Canvas::GC::Path::Path(GC& gc) : gc(gc.gc) {
 		gc.Flush();
 		cairo_new_path(gc.gc);
 	}
 
 	Canvas::GC::Path::~Path() { cairo_close_path(gc); }
-
 
 	Canvas::Canvas(unsigned width, unsigned height) noexcept(false)
 		: surface(
@@ -184,8 +167,8 @@ namespace tb {
 		}
 	}
 
-	cairo_surface_t*
-	Canvas::Load(const std::filesystem::path& path) noexcept(false) {
+	cairo_surface_t* Canvas::Load(const std::filesystem::path& path) noexcept(
+		false) {
 		static const struct EXTHandler {
 			const char* const ext;
 			cairo_surface_t* (*const loader)(const char*);
@@ -219,9 +202,8 @@ namespace tb {
 		// ファイルをまるごとメモリへマップ
 		struct stat stat;
 		fstat(fd, &stat);
-		unsigned char* const jpeg(
-			(unsigned char*)
-				mmap(NULL, stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
+		unsigned char* const jpeg((unsigned char*)mmap(
+			nullptr, stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
 		if (!jpeg) {
 			return 0; // mmap失敗
 		}
@@ -230,6 +212,8 @@ namespace tb {
 		struct jpeg_error_mgr jerr;
 		JSAMPARRAY jarr(0);
 
+// g++では通るがclangではsize_tがないと言われる問題への対処(ヘッダの違い？)
+#define size_t std::size_t
 		// 伸張準備
 		ci.err = jpeg_std_error(&jerr);
 		jpeg_create_decompress(&ci);
@@ -252,9 +236,7 @@ namespace tb {
 
 			// 画像確保
 			if (!(surface = cairo_image_surface_create(
-					  CAIRO_FORMAT_RGB24,
-					  ci.image_width,
-					  ci.image_height))) {
+					  CAIRO_FORMAT_RGB24, ci.image_width, ci.image_height))) {
 				throw 0; // 格納先確保失敗
 			}
 
@@ -272,9 +254,7 @@ namespace tb {
 			// 展開開始
 			jpeg_start_decompress(&ci);
 			while (ci.output_scanline < ci.output_height) {
-				jpeg_read_scanlines(
-					&ci,
-					&jarr[ci.output_scanline],
+				jpeg_read_scanlines(&ci, &jarr[ci.output_scanline],
 					ci.output_height - ci.output_scanline);
 			}
 

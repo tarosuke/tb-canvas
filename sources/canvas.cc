@@ -36,13 +36,41 @@
 #include <jpeglib.h>
 #include <stdio.h>
 #include <tb/canvas.h>
+#include <tb/color.h>
+
+
 
 namespace tb {
 
+	// canvasの内部フォーマットからtb::Color::Formatへ変換
+	const tb::Color::Format& Canvas::Image::ToolboxFormat() {
+		const auto cf(cairo_image_surface_get_format(surface));
+
+		switch (cf) {
+		case CAIRO_FORMAT_ARGB32:
+			return Color::Format::Select(Color::Format::ARGB8888);
+		case CAIRO_FORMAT_RGB24:
+			return Color::Format::Select(Color::Format::XRGB0888);
+		case CAIRO_FORMAT_RGB16_565:
+			return Color::Format::Select(Color::Format::RGB565);
+		case CAIRO_FORMAT_A8:
+			return Color::Format::Select(Color::Format::Grayscale8);
+		case CAIRO_FORMAT_A1:
+			return Color::Format::Select(Color::Format::BW);
+		default:
+			break;
+		}
+		return Color::Format::Select(Color::Format::ARGB8888);
+	}
+
+
+
 	Canvas::Image::Image(Canvas& canvas)
-		: tb::ImageARGB32(cairo_image_surface_get_data(canvas.surface),
+		: tb::Image((void*)cairo_image_surface_get_data(canvas.surface),
+			  ToolboxFormat(),
 			  cairo_image_surface_get_width(canvas.surface),
-			  cairo_image_surface_get_height(canvas.surface)),
+			  cairo_image_surface_get_height(canvas.surface),
+			  cairo_image_surface_get_stride(canvas.surface)),
 		  surface(canvas.surface) {}
 	Canvas::Image::~Image() { cairo_surface_mark_dirty(surface); }
 

@@ -36,8 +36,8 @@ namespace tb {
 	 */
 	class Canvas {
 		Canvas();
-		Canvas(const Canvas &);
-		void operator=(const Canvas &);
+		Canvas(const Canvas&);
+		void operator=(const Canvas&);
 
 	public:
 		/** GC
@@ -45,23 +45,23 @@ namespace tb {
 		 */
 		class GC {
 			GC();
-			GC(const GC &);
-			void operator=(const GC &);
+			GC(const GC&);
+			void operator=(const GC&);
 
 		public:
 			/** Path
 			 *  @brief 多角形などのような閉じたパスを作る時にRAIIする
 			 */
 			class Path {
-				Path(const Path &);
-				void operator=(const Path &);
+				Path(const Path&);
+				void operator=(const Path&);
 
 			public:
-				Path(GC &);
+				Path(GC&);
 				~Path();
 
 			private:
-				cairo_t *const gc;
+				cairo_t* const gc;
 			};
 
 			enum Slant { slant_normal, slant_italic, slant_oblique };
@@ -69,15 +69,16 @@ namespace tb {
 			enum Cap { cap_butt, cap_round, cap_square };
 			enum Join { join_miter, join_round, join_bevel };
 
-			GC(Canvas &);
+			GC(Canvas&);
 			~GC();
 
 			// 設定
 			void SetStroke(Color);
 			void SetFill(Color);
 			void Set(Color strokeColor, Color fillColor);
-			void Set(const char *family, Slant = slant_normal,
-					 Weight = weight_normal);
+			void Set(const char* family,
+				Slant = slant_normal,
+				Weight = weight_normal);
 			void SetThickness(double);
 			void Set(Cap);
 			void Set(Join);
@@ -86,16 +87,23 @@ namespace tb {
 			void Clear(Color);
 			void MoveTo(double x, double y);
 			void LineTo(double x, double y);
-			void Arc(double x, double y, double radius, double startAngle,
-					 double endAngle);
-			void CurveTo(double x0, double y0, double xc, double yc, double x1,
-						 double y1);
+			void Arc(double x,
+				double y,
+				double radius,
+				double startAngle,
+				double endAngle);
+			void CurveTo(double x0,
+				double y0,
+				double xc,
+				double yc,
+				double x1,
+				double y1);
 			void Rectandle(double x0, double y0, double x1, double y1);
-			void Puts(const char *utf8);
+			void Puts(const char* utf8);
 
 		private:
-			cairo_t *gc;
-			Canvas &canvas;
+			cairo_t* gc;
+			Canvas& canvas;
 			Color strokeColor;
 			Color fillColor;
 			double thickness;
@@ -107,27 +115,28 @@ namespace tb {
 		};
 
 		Canvas(unsigned width, unsigned height);
-		Canvas(const std::filesystem::path &) noexcept(false);
+		Canvas(const std::filesystem::path&) noexcept(false);
 		virtual ~Canvas();
 
-		struct Image : tb::ImageARGB32 {
-			Image(Canvas &);
+		struct Image : tb::Image {
+			Image(Canvas&);
 			~Image();
 
 		private:
-			cairo_surface_t *const surface;
+			cairo_surface_t* const surface;
+			const tb::Color::Format& ToolboxFormat();
 		};
 
 	protected:
-		cairo_surface_t *const surface;
+		cairo_surface_t* const surface;
 
-		virtual void OnCanvasUpdated(const Rect<2, double> &) {};
+		virtual void OnCanvasUpdated(const Rect<2, double>&) {};
 
 	private:
-		static cairo_surface_t *
-		Load(const std::filesystem::path &) noexcept(false);
-		static const char *GetExt(const char *);
-		static cairo_surface_t *LoadJPEG(const char *);
+		static cairo_surface_t* Load(const std::filesystem::path&) noexcept(
+			false);
+		static const char* GetExt(const char*);
+		static cairo_surface_t* LoadJPEG(const char*);
 	};
 
 }

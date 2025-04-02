@@ -118,13 +118,15 @@ namespace tb {
 		Canvas(const std::filesystem::path&) noexcept(false);
 		virtual ~Canvas();
 
+		void Save(const std::filesystem::path&) noexcept(false);
+
 		struct Image : tb::Image {
 			Image(Canvas&);
 			~Image();
 
 		private:
 			cairo_surface_t* const surface;
-			const tb::Color::Format& ToolboxFormat();
+			static const tb::Color::Format& ToolboxFormat(cairo_surface_t*);
 		};
 
 	protected:

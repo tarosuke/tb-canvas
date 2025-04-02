@@ -43,8 +43,8 @@
 namespace tb {
 
 	// canvasの内部フォーマットからtb::Color::Formatへ変換
-	const tb::Color::Format& Canvas::Image::ToolboxFormat() {
-		const auto cf(cairo_image_surface_get_format(surface));
+	const tb::Color::Format& Canvas::Image::ToolboxFormat(cairo_surface_t* s) {
+		const auto cf(cairo_image_surface_get_format(s));
 
 		switch (cf) {
 		case CAIRO_FORMAT_ARGB32:
@@ -67,7 +67,7 @@ namespace tb {
 
 	Canvas::Image::Image(Canvas& canvas)
 		: tb::Image((void*)cairo_image_surface_get_data(canvas.surface),
-			  ToolboxFormat(),
+			  ToolboxFormat(canvas.surface),
 			  cairo_image_surface_get_width(canvas.surface),
 			  cairo_image_surface_get_height(canvas.surface),
 			  cairo_image_surface_get_stride(canvas.surface)),
@@ -303,4 +303,9 @@ namespace tb {
 
 		return surface;
 	}
+
+
+	void Canvas::Save(const std::filesystem::path& path) noexcept(false) {
+		cairo_surface_write_to_png(surface, path.c_str());
+	};
 }

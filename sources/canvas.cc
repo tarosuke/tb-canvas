@@ -65,13 +65,16 @@ namespace tb {
 
 
 
-	Canvas::Image::Image(Canvas& canvas)
-		: tb::Image((void*)cairo_image_surface_get_data(canvas.surface),
-			  ToolboxFormat(canvas.surface),
-			  cairo_image_surface_get_width(canvas.surface),
-			  cairo_image_surface_get_height(canvas.surface),
-			  cairo_image_surface_get_stride(canvas.surface)),
-		  surface(canvas.surface) {}
+	Canvas::Image::Image(Canvas& canvas) :
+		tb::Image(
+			(void*)cairo_image_surface_get_data(canvas.surface),
+			ToolboxFormat(canvas.surface),
+			cairo_image_surface_get_width(canvas.surface),
+			cairo_image_surface_get_height(canvas.surface),
+			cairo_image_surface_get_stride(canvas.surface)),
+		surface(canvas.surface) {
+		cairo_surface_flush(surface);
+	}
 	Canvas::Image::~Image() { cairo_surface_mark_dirty(surface); }
 
 	Canvas::GC::GC(Canvas& c) : gc(cairo_create(c.surface)), canvas(c) {}
@@ -97,7 +100,8 @@ namespace tb {
 		// 更新範囲を更新
 		double ex[4];
 		cairo_stroke_extents(gc, &ex[0], &ex[1], &ex[2], &ex[3]);
-		const Rect<2, double> e(Vector<2, double>({ex[0], ex[1]}),
+		const Rect<2, double> e(
+			Vector<2, double>({ex[0], ex[1]}),
 			Vector<2, double>({ex[2], ex[3]}));
 
 		extents |= e;
@@ -108,8 +112,9 @@ namespace tb {
 		cairo_fill_preserve(gc);
 
 		// ストローク描画
-		cairo_set_source_rgba(gc, strokeColor.R(), strokeColor.G(),
-			strokeColor.B(), strokeColor.A());
+		cairo_set_source_rgba(
+			gc, strokeColor.R(), strokeColor.G(), strokeColor.B(),
+			strokeColor.A());
 		cairo_set_line_width(gc, thickness);
 		cairo_set_line_cap(gc, caps[cap]);
 		cairo_set_line_join(gc, joins[join]);
@@ -183,9 +188,9 @@ namespace tb {
 
 	Canvas::GC::Path::~Path() { cairo_close_path(gc); }
 
-	Canvas::Canvas(unsigned width, unsigned height) noexcept(false)
-		: surface(
-			  cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height)) {}
+	Canvas::Canvas(unsigned width, unsigned height) noexcept(false) :
+		surface(
+			cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height)) {}
 
 	Canvas::Canvas(const std::filesystem::path& path) : surface(Load(path)) {}
 
@@ -195,8 +200,8 @@ namespace tb {
 		}
 	}
 
-	cairo_surface_t* Canvas::Load(const std::filesystem::path& path) noexcept(
-		false) {
+	cairo_surface_t*
+	Canvas::Load(const std::filesystem::path& path) noexcept(false) {
 		static const struct EXTHandler {
 			const char* const ext;
 			cairo_surface_t* (*const loader)(const char*);
@@ -282,7 +287,8 @@ namespace tb {
 			// 展開開始
 			jpeg_start_decompress(&ci);
 			while (ci.output_scanline < ci.output_height) {
-				jpeg_read_scanlines(&ci, &jarr[ci.output_scanline],
+				jpeg_read_scanlines(
+					&ci, &jarr[ci.output_scanline],
 					ci.output_height - ci.output_scanline);
 			}
 

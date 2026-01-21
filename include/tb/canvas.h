@@ -20,8 +20,8 @@
 #pragma once
 
 #include <filesystem>
+#include <tb/geometry/rect.h>
 #include <tb/image.h>
-#include <tb/rect.h>
 #include <tb/types.h>
 
 extern "C" {
@@ -35,9 +35,9 @@ namespace tb {
 	 * @brief 描画先(いわゆるDrawable)
 	 */
 	class Canvas {
-		Canvas();
-		Canvas(const Canvas&);
-		void operator=(const Canvas&);
+		Canvas() = delete;
+		Canvas(const Canvas&) = delete;
+		void operator=(const Canvas&) = delete;
 
 	public:
 		/** GC
@@ -98,7 +98,7 @@ namespace tb {
 				double yc,
 				double x1,
 				double y1);
-			void Rectandle(double x0, double y0, double x1, double y1);
+			void Rectangle(double x0, double y0, double x1, double y1);
 			void Puts(const char* utf8);
 
 		private:
@@ -109,12 +109,16 @@ namespace tb {
 			double thickness;
 			Cap cap;
 			Join join;
-			Rect<2, double> extents;
+			geometry::Rect<2, double> extents;
 
 			void Flush();
 		};
 
 		Canvas(unsigned width, unsigned height);
+		template <unsigned D, typename T>
+		Canvas(const tb::geometry::Spread<D, T>& s) : Canvas(s[0], s[1]) {
+			static_assert(2 <= D);
+		}
 		Canvas(const std::filesystem::path&) noexcept(false);
 		virtual ~Canvas();
 
@@ -132,7 +136,7 @@ namespace tb {
 	protected:
 		cairo_surface_t* const surface;
 
-		virtual void OnCanvasUpdated(const Rect<2, double>&) {};
+		virtual void OnCanvasUpdated(const geometry::Rect<2, double>&) {};
 
 	private:
 		static cairo_surface_t* Load(const std::filesystem::path&) noexcept(

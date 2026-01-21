@@ -66,8 +66,7 @@ namespace tb {
 
 
 	Canvas::Image::Image(Canvas& canvas) :
-		tb::Image(
-			(void*)cairo_image_surface_get_data(canvas.surface),
+		tb::Image((void*)cairo_image_surface_get_data(canvas.surface),
 			ToolboxFormat(canvas.surface),
 			cairo_image_surface_get_width(canvas.surface),
 			cairo_image_surface_get_height(canvas.surface),
@@ -77,7 +76,12 @@ namespace tb {
 	}
 	Canvas::Image::~Image() { cairo_surface_mark_dirty(surface); }
 
-	Canvas::GC::GC(Canvas& c) : gc(cairo_create(c.surface)), canvas(c) {}
+	Canvas::GC::GC(Canvas& c) :
+		gc(cairo_create(c.surface)),
+		canvas(c),
+		thickness(1.0),
+		cap(cap_butt),
+		join(join_miter) {}
 
 	Canvas::GC::~GC() {
 		Flush();
@@ -100,9 +104,9 @@ namespace tb {
 		// 更新範囲を更新
 		double ex[4];
 		cairo_stroke_extents(gc, &ex[0], &ex[1], &ex[2], &ex[3]);
-		const Rect<2, double> e(
-			Vector<2, double>({ex[0], ex[1]}),
-			Vector<2, double>({ex[2], ex[3]}));
+		const geometry::Rect<2, double> e(
+			geometry::Vector<2, double>({ex[0], ex[1]}),
+			geometry::Vector<2, double>({ex[2], ex[3]}));
 
 		extents |= e;
 
@@ -112,9 +116,8 @@ namespace tb {
 		cairo_fill_preserve(gc);
 
 		// ストローク描画
-		cairo_set_source_rgba(
-			gc, strokeColor.R(), strokeColor.G(), strokeColor.B(),
-			strokeColor.A());
+		cairo_set_source_rgba(gc, strokeColor.R(), strokeColor.G(),
+			strokeColor.B(), strokeColor.A());
 		cairo_set_line_width(gc, thickness);
 		cairo_set_line_cap(gc, caps[cap]);
 		cairo_set_line_join(gc, joins[join]);
@@ -161,10 +164,15 @@ namespace tb {
 	}
 
 	void Canvas::GC::Clear(Color c) {
-		cairo_pattern_t* const p(cairo_get_source(gc));
 		cairo_set_source_rgba(gc, c.R(), c.G(), c.B(), c.A());
 		cairo_paint(gc);
-		cairo_set_source(gc, p);
+
+		double ex[4];
+		cairo_clip_extents(gc, &ex[0], &ex[1], &ex[2], &ex[3]);
+		const geometry::Rect<2, double> e(
+			geometry::Vector<2, double>({ex[0], ex[1]}),
+			geometry::Vector<2, double>({ex[2], ex[3]}));
+		extents |= e;
 	}
 	void Canvas::GC::MoveTo(double x, double y) { cairo_move_to(gc, x, y); }
 	void Canvas::GC::LineTo(double x, double y) { cairo_line_to(gc, x, y); }
@@ -176,7 +184,7 @@ namespace tb {
 		double x0, double y0, double xc, double yc, double x1, double y1) {
 		cairo_curve_to(gc, x0, y0, xc, yc, x1, y1);
 	}
-	void Canvas::GC::Rectandle(double x0, double y0, double x1, double y1) {
+	void Canvas::GC::Rectangle(double x0, double y0, double x1, double y1) {
 		cairo_rectangle(gc, x0, y0, x1, y1);
 	}
 	void Canvas::GC::Puts(const char* utf8) { cairo_show_text(gc, utf8); }
@@ -200,8 +208,8 @@ namespace tb {
 		}
 	}
 
-	cairo_surface_t*
-	Canvas::Load(const std::filesystem::path& path) noexcept(false) {
+	cairo_surface_t* Canvas::Load(const std::filesystem::path& path) noexcept(
+		false) {
 		static const struct EXTHandler {
 			const char* const ext;
 			cairo_surface_t* (*const loader)(const char*);
@@ -287,8 +295,7 @@ namespace tb {
 			// 展開開始
 			jpeg_start_decompress(&ci);
 			while (ci.output_scanline < ci.output_height) {
-				jpeg_read_scanlines(
-					&ci, &jarr[ci.output_scanline],
+				jpeg_read_scanlines(&ci, &jarr[ci.output_scanline],
 					ci.output_height - ci.output_scanline);
 			}
 
